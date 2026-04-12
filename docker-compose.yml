@@ -1,0 +1,11 @@
+services:
+  actsm:
+    image: ${IMAGE:-actsm-a1}
+    build:
+      context: .
+      platforms:
+        - ${PLATFORM:-linux/amd64}
+    volumes:
+      - .:/code
+    stdin_open: true
+    tty: true
