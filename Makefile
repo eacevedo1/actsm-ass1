@@ -8,7 +8,7 @@ MODELS_DIR := models
 
 ESSENTIA_BASE := https://essentia.upf.edu/models
 ESSENTIA_MODELS := \
-	feature-extractors/discogs-effnet/discogs_release_embeddings-effnet-bs64-1.pb \
+	feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb \
 	classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb \
 	classification-heads/voice_instrumental/voice_instrumental-audioset-vggish-1.pb
 
@@ -21,7 +21,7 @@ build:
 	docker compose build
 
 up:
-	docker compose up --build -d
+	docker compose up -d
 
 down:
 	docker compose down
