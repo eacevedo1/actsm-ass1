@@ -10,7 +10,8 @@ ESSENTIA_BASE := https://essentia.upf.edu/models
 ESSENTIA_MODELS := \
 	feature-extractors/discogs-effnet/discogs-effnet-bs64-1.pb \
 	classification-heads/genre_discogs400/genre_discogs400-discogs-effnet-1.pb \
-	classification-heads/voice_instrumental/voice_instrumental-audioset-vggish-1.pb
+	classification-heads/voice_instrumental/voice_instrumental-discogs-effnet-1.pb \
+	classification-heads/danceability/danceability-discogs-effnet-1.pb
 
 CLAP_URL := https://huggingface.co/lukewys/laion_clap/resolve/main/music_speech_epoch_15_esc_89.25.pt
 CLAP_FILE := music_speech_epoch_15_esc_89.25.pt
