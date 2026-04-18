@@ -68,3 +68,17 @@ def discogs400Effnet_extractor(
     embeddings = effnet_model(x)
     predictions = genre_model(embeddings)
     return embeddings, predictions
+
+
+def effnet_classifier(embeddings: np.ndarray, model: es.TensorflowPredict2D) -> np.ndarray:
+    """
+    Runs a Discogs-EffNet-based classifier on frame embeddings.
+
+    :param embeddings: EffNet frame embeddings of shape (n_frames, 1280).
+    :param model: Pre-loaded TensorflowPredict2D classifier model.
+    :return: Softmax predictions of shape (n_frames, n_classes).
+    """
+    assert embeddings.ndim == 2 and embeddings.shape[1] == 1280, (
+        f"Expected embeddings (n_frames, 1280), got shape {embeddings.shape}"
+    )
+    return model(embeddings)
