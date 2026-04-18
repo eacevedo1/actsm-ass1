@@ -29,3 +29,20 @@ def key_extractor(x: np.ndarray) -> tuple[str, str, float]:
     """
 
     return es.KeyExtractor().compute(x)
+
+
+def loudnessEBUR_extractor(x: np.ndarray) -> float:
+    """
+    LoudnessEBUR128 extractor.
+
+    :param x: Stereo Audio signal as a numpy array
+    :return: Float of integrated loudness (overall) (LUFS)
+    """
+
+    assert x.ndim == 2 and x.shape[1] == 2, (
+        f"Expected stereo audio (samples, 2), got shape {x.shape}"
+    )
+
+    _, _, integratedLoudness, _ = es.LoudnessEBUR128().compute(x)
+
+    return integratedLoudness
