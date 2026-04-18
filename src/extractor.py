@@ -70,7 +70,9 @@ def discogs400Effnet_extractor(
     return embeddings, predictions
 
 
-def effnet_classifier(embeddings: np.ndarray, model: es.TensorflowPredict2D) -> np.ndarray:
+def effnet_classifier(
+    embeddings: np.ndarray, model: es.TensorflowPredict2D
+) -> np.ndarray:
     """
     Runs a Discogs-EffNet-based classifier on frame embeddings.
 
