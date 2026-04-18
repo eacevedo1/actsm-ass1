@@ -49,27 +49,22 @@ def loudnessEBUR_extractor(x: np.ndarray) -> float:
     return integratedLoudness
 
 
-def discogs400Effnet_extractor(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def discogs400Effnet_extractor(
+    x: np.ndarray,
+    effnet_model: es.TensorflowPredictEffnetDiscogs,
+    genre_model: es.TensorflowPredict2D,
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    Extracts Discogs-EffNet embeddings and Genre Discogs400 predictions.
+    Extracts Discogs-EffNet embeddings and Genre Discogs400 predictions for a single track.
 
     :param x: Mono audio array of shape (samples,) at 16kHz.
+    :param effnet_model: Pre-loaded TensorflowPredictEffnetDiscogs model.
+    :param genre_model: Pre-loaded TensorflowPredict2D genre model.
     :return: Tuple of (embeddings, predictions)
         - embeddings: EffNet frame embeddings of shape (n_frames, 1280)
         - predictions: Genre activations of shape (n_frames, 400)
     """
     assert x.ndim == 1, f"Expected mono audio (samples,), got shape {x.shape}"
-
-    model = es.TensorflowPredictEffnetDiscogs(
-        graphFilename="models/discogs-effnet-bs64-1.pb", output="PartitionedCall:1"
-    )
-    embeddings = model(x)
-
-    model2 = es.TensorflowPredict2D(
-        graphFilename="models/genre_discogs400-discogs-effnet-1.pb",
-        input="serving_default_model_Placeholder",
-        output="PartitionedCall:0",
-    )
-    predictions = model2(embeddings)
-
+    embeddings = effnet_model(x)
+    predictions = genre_model(embeddings)
     return embeddings, predictions
