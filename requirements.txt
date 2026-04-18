@@ -1,1 +1,3 @@
 essentia-tensorflow==2.1b6.dev1389
+ruff==0.15.10
+laion_clap==1.1.7
