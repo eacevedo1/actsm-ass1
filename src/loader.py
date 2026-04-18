@@ -9,7 +9,6 @@ def load_audio(path: str) -> tuple[np.ndarray, int]:
     :param path: Path to the audio file to load.
     :return: Loaded audio signal as a numpy array and the sample rate.
     """
-
     loader = es.AudioLoader(filename=path)
     audio, sample_rate, number_channels, md5, bit_rate, codec = loader()
 

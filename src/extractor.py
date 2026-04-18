@@ -11,6 +11,7 @@ def bpm_extractor(x: np.ndarray) -> tuple[float, float]:
         - bpm: Tempo of the audio in beats per minute
         - confidence: Confidence of the BPM estimation (0-1)
     """
+    assert x.ndim == 1, f"Expected mono audio (samples,), got shape {x.shape}"
 
     bpm, _, confidence, _, _ = es.RhythmExtractor2013().compute(x)
 
@@ -27,6 +28,7 @@ def key_extractor(x: np.ndarray) -> tuple[str, str, float]:
         - scale: Scale of the audio (e.g. 'major', 'minor')
         - confidence: Confidence of the key estimation (0-1)
     """
+    assert x.ndim == 1, f"Expected mono audio (samples,), got shape {x.shape}"
 
     return es.KeyExtractor().compute(x)
 
@@ -38,7 +40,6 @@ def loudnessEBUR_extractor(x: np.ndarray) -> float:
     :param x: Stereo Audio signal as a numpy array
     :return: Float of integrated loudness (overall) (LUFS)
     """
-
     assert x.ndim == 2 and x.shape[1] == 2, (
         f"Expected stereo audio (samples, 2), got shape {x.shape}"
     )
@@ -46,3 +47,29 @@ def loudnessEBUR_extractor(x: np.ndarray) -> float:
     _, _, integratedLoudness, _ = es.LoudnessEBUR128().compute(x)
 
     return integratedLoudness
+
+
+def discogs400Effnet_extractor(x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Extracts Discogs-EffNet embeddings and Genre Discogs400 predictions.
+
+    :param x: Mono audio array of shape (samples,) at 16kHz.
+    :return: Tuple of (embeddings, predictions)
+        - embeddings: EffNet frame embeddings of shape (n_frames, 1280)
+        - predictions: Genre activations of shape (n_frames, 400)
+    """
+    assert x.ndim == 1, f"Expected mono audio (samples,), got shape {x.shape}"
+
+    model = es.TensorflowPredictEffnetDiscogs(
+        graphFilename="models/discogs-effnet-bs64-1.pb", output="PartitionedCall:1"
+    )
+    embeddings = model(x)
+
+    model2 = es.TensorflowPredict2D(
+        graphFilename="models/genre_discogs400-discogs-effnet-1.pb",
+        input="serving_default_model_Placeholder",
+        output="PartitionedCall:0",
+    )
+    predictions = model2(embeddings)
+
+    return embeddings, predictions
