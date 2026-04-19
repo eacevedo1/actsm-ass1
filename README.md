@@ -14,9 +14,10 @@ Downloads to `models/`:
 
 | File | Source |
 |------|--------|
-| `discogs_release_embeddings-effnet-bs64-1.pb` | Essentia — discogs-effnet embeddings |
+| `discogs-effnet-bs64-1.pb` | Essentia — Discogs-EffNet embeddings |
 | `genre_discogs400-discogs-effnet-1.pb` | Essentia — Genre Discogs400 classifier |
-| `voice_instrumental-audioset-vggish-1.pb` | Essentia — Voice/Instrumental classifier |
+| `voice_instrumental-discogs-effnet-1.pb` | Essentia — Voice/Instrumental classifier |
+| `danceability-discogs-effnet-1.pb` | Essentia — Danceability classifier |
 | `music_speech_epoch_15_esc_89.25.pt` | HuggingFace — LAION CLAP |
 
 Skips files already present.
@@ -28,6 +29,10 @@ make up
 ```
 
 Builds the Docker image and starts. The repo root is mounted at `/code` inside the container.
+
+Two requirements files are used:
+- `requirements.txt` — binary wheels only (`--only-binary=:all:`)
+- `requirements-src.txt` — packages requiring source builds (e.g. `laion_clap`)
 
 ## Make targets
 
