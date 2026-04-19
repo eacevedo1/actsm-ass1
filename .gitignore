@@ -208,4 +208,6 @@ __marimo__/
 
 # Ignore data folder
 data/
+models/
+features/
 .DS_Store
