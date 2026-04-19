@@ -1,5 +1,6 @@
 import numpy as np
 import essentia.standard as es
+import laion_clap
 
 
 def bpm_extractor(x: np.ndarray) -> tuple[float, float]:
@@ -84,3 +85,30 @@ def effnet_classifier(
         f"Expected embeddings (n_frames, 1280), got shape {embeddings.shape}"
     )
     return model(embeddings)
+
+
+def clap_audio_extractor(
+    audio: np.ndarray, model: laion_clap.CLAP_Module
+) -> np.ndarray:
+    """
+    Extracts CLAP audio embedding from a mono 48kHz audio array.
+
+    :param audio: Mono audio array of shape (samples,) at 48kHz.
+    :param model: Pre-loaded CLAP_Module.
+    :return: Audio embedding of shape (512,).
+    """
+    assert audio.ndim == 1, f"Expected mono audio (samples,), got shape {audio.shape}"
+    x = audio.reshape(1, -1)
+    embedding = model.get_audio_embedding_from_data(x=x, use_tensor=False)
+    return embedding.squeeze(0)
+
+
+def clap_text_extractor(texts: list[str], model: laion_clap.CLAP_Module) -> np.ndarray:
+    """
+    Extracts CLAP text embeddings from a list of strings.
+
+    :param texts: List of text queries.
+    :param model: Pre-loaded CLAP_Module.
+    :return: Text embeddings of shape (n_texts, 512).
+    """
+    return model.get_text_embedding(texts, use_tensor=False)

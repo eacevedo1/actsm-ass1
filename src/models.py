@@ -1,4 +1,5 @@
 import essentia.standard as es
+import laion_clap
 
 
 def load_discogs400Effnet_models() -> tuple[
@@ -42,3 +43,9 @@ def load_danceability_model() -> es.TensorflowPredict2D:
         graphFilename="models/danceability-discogs-effnet-1.pb",
         output="model/Softmax",
     )
+
+
+def load_clap_model() -> laion_clap.CLAP_Module:
+    model = laion_clap.CLAP_Module(enable_fusion=False, amodel="HTSAT-base")
+    model.load_ckpt("models/music_speech_epoch_15_esc_89.25.pt")
+    return model
