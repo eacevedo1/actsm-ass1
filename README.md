@@ -34,6 +34,27 @@ Two requirements files are used:
 - `requirements.txt` — binary wheels only (`--only-binary=:all:`)
 - `requirements-src.txt` — packages requiring source builds (e.g. `laion_clap`)
 
+### 3. Analyze audio collection
+
+```bash
+make up      # container must be running
+make analyze
+```
+
+Runs inside the Docker container. Scans `data/` recursively for MP3 files and writes per-track features to `features/`, mirroring the input folder tree. Skips tracks already processed.
+
+To target a different collection or adjust parallelism, exec into the container:
+
+```bash
+docker compose exec actsm python /code/scripts/analyze.py --audio-dir /code/data --output-dir /code/features --workers 4
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--audio-dir` | `data` | Root folder scanned recursively for `.mp3` files |
+| `--output-dir` | `features` | Output folder for `.pkl.gz` feature files |
+| `--workers` | `1` | Parallel worker processes (each loads all models into RAM) |
+
 ## Make targets
 
 | Target | Description |
@@ -43,3 +64,4 @@ Two requirements files are used:
 | `make down` | Stop container |
 | `make shell` | Open bash shell in running container |
 | `make models` | Download model files to `models/` |
+| `make analyze` | Run analysis pipeline on `data/` with 8 workers |
