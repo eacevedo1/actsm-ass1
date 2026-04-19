@@ -16,7 +16,7 @@ ESSENTIA_MODELS := \
 CLAP_URL := https://huggingface.co/lukewys/laion_clap/resolve/main/music_speech_epoch_15_esc_89.25.pt
 CLAP_FILE := music_speech_epoch_15_esc_89.25.pt
 
-.PHONY: build up down shell models
+.PHONY: build up down shell models analyze
 
 build:
 	docker compose build
@@ -29,6 +29,9 @@ down:
 
 shell:
 	docker compose exec actsm bash || docker compose run --rm actsm bash
+
+analyze:
+	docker compose exec actsm python /code/scripts/analyze.py --audio-dir /code/data --output-dir /code/features --workers 4
 
 models:
 	mkdir -p $(MODELS_DIR)
