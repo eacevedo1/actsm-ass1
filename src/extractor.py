@@ -19,19 +19,10 @@ def bpm_extractor(x: np.ndarray) -> tuple[float, float]:
     return bpm, confidence
 
 
-def key_extractor(x: np.ndarray) -> tuple[str, str, float]:
-    """
-    Key extractor.
-
-    :param x: Audio signal as a numpy array
-    :return: Tuple of (key, scale, confidence)
-        - key: Musical key of the audio (e.g. 'C', 'G#')
-        - scale: Scale of the audio (e.g. 'major', 'minor')
-        - confidence: Confidence of the key estimation (0-1)
-    """
+def key_extractor(x: np.ndarray, profileType: str = "bgate") -> tuple[str, str, float]:
     assert x.ndim == 1, f"Expected mono audio (samples,), got shape {x.shape}"
 
-    return es.KeyExtractor().compute(x)
+    return es.KeyExtractor(profileType=profileType).compute(x)
 
 
 def loudnessEBUR_extractor(x: np.ndarray) -> float:
