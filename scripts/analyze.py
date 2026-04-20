@@ -11,24 +11,24 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
-import essentia
+import essentia  # noqa: E402
 
 essentia.log.warningActive = False
 essentia.log.infoActive = False
 
-from src.loader import load_audio, convert_to_mono, resample
-from src.models import (
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.loader import load_audio, convert_to_mono, resample  # noqa: E402
+from src.models import (  # noqa: E402
     load_discogs400Effnet_models,
     load_voiceinstrumental_model,
     load_danceability_model,
     load_clap_model,
 )
-from src.extractor import (
+from src.extractor import (  # noqa: E402
     bpm_extractor,
     key_extractor,
     loudnessEBUR_extractor,
@@ -67,7 +67,10 @@ def analyze_track(path: Path, models) -> dict:
     mono_48k, _ = resample(mono, sr, 48000)
 
     bpm, bpm_conf = bpm_extractor(mono_16k)
-    key, scale, key_conf = key_extractor(mono_16k)
+    key_profiles = {}
+    for profile in ("temperley", "krumhansl", "edma"):
+        k, s, c = key_extractor(mono_16k, profileType=profile)
+        key_profiles[profile] = {"key": k, "scale": s, "confidence": float(c)}
     loudness = loudnessEBUR_extractor(audio_stereo)
 
     emb_frames, genre_preds = discogs400Effnet_extractor(mono_16k, effnet, genre)
@@ -78,9 +81,9 @@ def analyze_track(path: Path, models) -> dict:
     return {
         "bpm": float(bpm),
         "bpm_confidence": float(bpm_conf),
-        "key": key,
-        "scale": scale,
-        "key_confidence": float(key_conf),
+        "key_temperley": key_profiles["temperley"],
+        "key_krumhansl": key_profiles["krumhansl"],
+        "key_edma": key_profiles["edma"],
         "loudness_integrated_lufs": float(loudness),
         "discogs_effnet_embedding": emb_frames.mean(axis=0).astype(np.float32),
         "genre_discogs400": genre_preds.mean(axis=0).astype(np.float32),
@@ -124,15 +127,21 @@ def main():
         description="Analyze MP3 collection with Essentia + CLAP."
     )
     parser.add_argument(
-        "--audio-dir", type=Path, default=Path("data"),
+        "--audio-dir",
+        type=Path,
+        default=Path("data"),
         help="Root folder to scan recursively for .mp3 files.",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=Path("features"),
+        "--output-dir",
+        type=Path,
+        default=Path("features"),
         help="Folder to write per-track .pkl.gz features (mirrors input tree).",
     )
     parser.add_argument(
-        "--workers", type=int, default=1,
+        "--workers",
+        type=int,
+        default=1,
         help="Parallel worker processes. Each loads models once (memory x N).",
     )
     args = parser.parse_args()
