@@ -2,3 +2,7 @@ laion_clap==1.1.7
 jupyter==1.1.1
 matplotlib==3.10.8
 seaborn==0.13.2
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pyarrow==17.0.0
+faiss-cpu==1.13.2

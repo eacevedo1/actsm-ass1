@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MusAV — Playlist Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">🎵</div>
+      <div>
+        <h1>MusAV Playlist Builder</h1>
+        <div class="sub">2100 tracks · Essentia + CLAP analysis</div>
+      </div>
+    </div>
+  </div>
+  <nav>
+    <button data-tab="descriptors" class="active">Descriptors</button>
+    <button data-tab="similarity">Similarity</button>
+    <button data-tab="text">Text Search</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ── DESCRIPTORS ── -->
+<section id="tab-descriptors">
+  <div class="panel">
+    <h2>Filter by descriptors</h2>
+
+    <div class="row">
+      <div>
+        <label>Parent genre</label>
+        <select id="f-parent"><option value="any">(any)</option></select>
+      </div>
+      <div class="wide">
+        <label>Style</label>
+        <select id="f-style"><option value="any">(any)</option></select>
+      </div>
+      <div>
+        <label>Min activation</label>
+        <input type="number" id="f-actmin" min="0" max="1" step="0.01" value="0" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>BPM min</label>
+        <input type="number" id="f-bpmmin" value="60" step="1" />
+      </div>
+      <div>
+        <label>BPM max</label>
+        <input type="number" id="f-bpmmax" value="180" step="1" />
+      </div>
+      <div>
+        <label>Voice</label>
+        <select id="f-voice">
+          <option value="any">Any</option>
+          <option value="vocal">Vocal</option>
+          <option value="instrumental">Instrumental</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Danceability min</label>
+        <input type="number" id="f-dmin" min="0" max="1" step="0.01" value="0" />
+      </div>
+      <div>
+        <label>Danceability max</label>
+        <input type="number" id="f-dmax" min="0" max="1" step="0.01" value="1" />
+      </div>
+      <div>
+        <label>Key root</label>
+        <select id="f-root"><option value="any">(any)</option></select>
+      </div>
+      <div>
+        <label>Scale</label>
+        <select id="f-scale">
+          <option value="any">(any)</option>
+          <option value="major">major</option>
+          <option value="minor">minor</option>
+        </select>
+      </div>
+      <div>
+        <label>Min key conf.</label>
+        <input type="number" id="f-kconf" min="0" max="1" step="0.01" value="0" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Top-K</label>
+        <input type="number" id="f-k" min="1" max="100" value="10" />
+      </div>
+      <div style="flex: 3 1 auto;">
+        <div class="btn-group">
+          <button class="primary" id="f-run">Generate playlist</button>
+          <button class="ghost" id="f-m3u8">Export M3U8</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="status" id="f-status"></div>
+    <div id="f-results"></div>
+  </div>
+</section>
+
+<!-- ── SIMILARITY ── -->
+<section id="tab-similarity" class="hidden">
+  <div class="panel">
+    <h2>Playlists by track similarity</h2>
+
+    <div class="row">
+      <div class="wide">
+        <label>Query track</label>
+        <select id="s-track"></select>
+      </div>
+      <div>
+        <label>Top-K</label>
+        <input type="number" id="s-k" min="1" max="50" value="10" />
+      </div>
+      <div>
+        <button class="primary" id="s-run" style="margin-top:1.4rem">Find similar</button>
+      </div>
+    </div>
+
+    <div id="s-query-box" class="query-box hidden">
+      <label>Query preview</label>
+      <audio id="s-query-audio" controls preload="none"></audio>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="columns">
+      <div>
+        <h3>
+          Discogs-EffNet
+          <button class="ghost" data-m3u8-src="effnet">Export M3U8</button>
+        </h3>
+        <div id="s-effnet"></div>
+      </div>
+      <div>
+        <h3>
+          CLAP
+          <button class="ghost" data-m3u8-src="clap">Export M3U8</button>
+        </h3>
+        <div id="s-clap"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TEXT ── -->
+<section id="tab-text" class="hidden">
+  <div class="panel">
+    <h2>Playlists by freeform text</h2>
+
+    <form id="t-form" class="search-bar">
+      <input id="t-q" type="text" placeholder="e.g. melancholic piano solo at night" autofocus />
+      <input type="number" id="t-k" min="1" max="50" value="10" />
+      <button class="primary" type="submit" id="t-btn">Search</button>
+      <button class="ghost" type="button" id="t-m3u8">Export M3U8</button>
+    </form>
+
+    <div class="examples">
+      <span class="examples-label">Try:</span>
+      <span>energetic rock guitar</span>
+      <span>calm ambient pad</span>
+      <span>latin reggaeton beat</span>
+      <span>female vocal jazz</span>
+      <span>lofi hip hop chill</span>
+      <span>aggressive metal riff</span>
+    </div>
+
+    <div class="status" id="t-status"></div>
+    <div id="t-results"></div>
+  </div>
+</section>
+
+</main>
+
+<div id="toast" class="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
