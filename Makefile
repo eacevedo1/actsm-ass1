@@ -16,7 +16,7 @@ ESSENTIA_MODELS := \
 CLAP_URL := https://huggingface.co/lukewys/laion_clap/resolve/main/music_speech_epoch_15_esc_89.25.pt
 CLAP_FILE := music_speech_epoch_15_esc_89.25.pt
 
-.PHONY: build up down shell models analyze
+.PHONY: build up down shell models analyze app indexes
 
 build:
 	docker compose build
@@ -31,7 +31,10 @@ shell:
 	docker compose exec actsm bash || docker compose run --rm actsm bash
 
 analyze:
-	docker compose exec actsm python /code/scripts/analyze.py --audio-dir /code/data --output-dir /code/features --workers 4
+	docker compose exec actsm python /code/scripts/analyze.py --audio-dir /code/data --output-dir /code/features --workers 1
+
+app: indexes
+	docker compose exec actsm uvicorn api:app --host 0.0.0.0 --port 8000 --app-dir /code
 
 models:
 	mkdir -p $(MODELS_DIR)
@@ -49,3 +52,6 @@ models:
 	else \
 		echo "Skip $(CLAP_FILE) (exists)"; \
 	fi
+
+indexes:
+	docker compose exec actsm python /code/scripts/build_indexes.py
