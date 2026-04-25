@@ -13,13 +13,13 @@ from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from src.ui_data import load_collection, write_m3u8  # noqa: E402
+from src.ui_data import load_collection, build_m3u8_content  # noqa: E402
 from src.models import load_clap_model  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
-PLAYLIST_DIR = ROOT / "output" / "playlists"
 INDEXES_DIR = ROOT / "output" / "cache" / "indexes"
+HOST_ROOT = os.environ.get("HOST_ROOT", "")
 
 app = FastAPI(title="MusAV — Unified Playlist API")
 
@@ -200,8 +200,8 @@ def export_m3u8(body: M3U8Body):
     idxs = [i for i in body.indices if 0 <= i < len(df)]
     paths = df.iloc[idxs].audio_path.tolist()
     titles = df.iloc[idxs].track_id.tolist()
-    out = write_m3u8(paths, PLAYLIST_DIR / f"{body.name}.m3u8", titles=titles)
-    return {"path": str(out.resolve()), "count": len(idxs)}
+    content = build_m3u8_content(paths, titles, host_root=HOST_ROOT)
+    return {"content": content, "filename": f"{body.name}.m3u8", "count": len(idxs)}
 
 
 @app.get("/audio/{idx}")

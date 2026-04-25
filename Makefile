@@ -1,5 +1,7 @@
 IMAGE ?= actsm-a1
 PLATFORM ?= linux/amd64
+HOST_ROOT ?= $(shell pwd)
+export HOST_ROOT
 
 BUILD_PLATFORM_FLAG := $(if $(PLATFORM),--platform $(PLATFORM),)
 RUN_PLATFORM_FLAG := $(if $(PLATFORM),--platform $(PLATFORM),)

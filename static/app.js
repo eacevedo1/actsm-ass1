@@ -51,7 +51,14 @@ async function exportM3U8(name, indices) {
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
-    toast(`Saved ${data.count} tracks → ${data.path}`);
+    const blob = new Blob([data.content], { type: 'audio/x-mpegurl' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = data.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(`Downloaded ${data.count} tracks as ${data.filename}`);
   } catch (e) { toast(`Export failed: ${e.message}`, false); }
 }
 

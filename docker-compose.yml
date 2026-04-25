@@ -7,10 +7,12 @@ services:
         - ${PLATFORM:-linux/amd64}
     volumes:
       - .:/code
+    environment:
+      - HOST_ROOT=${HOST_ROOT}
     ports:
       - "8888:8888"
       - "8000:8000"
     command: >-
-      bash -c "jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=''"
+      bash -c "jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --notebook-dir=/code --ContentsManager.allow_hidden=False"
     stdin_open: true
     tty: true

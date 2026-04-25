@@ -115,12 +115,19 @@ def cosine_top_k(query: np.ndarray, matrix: np.ndarray, k: int, exclude: int | N
     return idx, scores[idx]
 
 
-def write_m3u8(paths: list[str], out_path: Path, titles: list[str] | None = None):
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+def build_m3u8_content(paths: list[str], titles: list[str] | None = None, docker_root: str = "/code", host_root: str = "") -> str:
     lines = ["#EXTM3U"]
     for i, p in enumerate(paths):
         title = titles[i] if titles else Path(p).stem
+        resolved = str(Path(p).resolve())
+        if host_root:
+            resolved = resolved.replace(docker_root, host_root, 1)
         lines.append(f"#EXTINF:-1,{title}")
-        lines.append(str(Path(p).resolve()))
-    out_path.write_text("\n".join(lines) + "\n")
+        lines.append(resolved)
+    return "\n".join(lines) + "\n"
+
+
+def write_m3u8(paths: list[str], out_path: Path, titles: list[str] | None = None):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(build_m3u8_content(paths, titles))
     return out_path
