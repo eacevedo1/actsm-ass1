@@ -95,7 +95,16 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="upload-zone" id="f-upload-zone">
+      <input type="file" id="f-upload" accept="audio/*" />
+      <label for="f-upload" class="upload-label">
+        <span class="upload-icon">🎵</span>
+        <span class="upload-text">Drop a track or <u>browse</u> to auto-fill all filters</span>
+      </label>
+      <div class="upload-status" id="f-analyze-status"></div>
+    </div>
+
+    <div class="row" style="margin-top:.75rem">
       <div>
         <label>Top-K</label>
         <input type="number" id="f-k" min="1" max="100" value="10" />

@@ -9,14 +9,21 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 
 import faiss  # noqa: E402
 import numpy as np  # noqa: E402
-from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi import FastAPI, HTTPException, Request  # noqa: E402
 from fastapi.responses import FileResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from src.ui_data import load_collection, build_m3u8_content  # noqa: E402
-from src.models import load_clap_model  # noqa: E402
+from src.models import (  # noqa: E402
+    load_clap_model,
+    load_discogs400Effnet_models,
+    load_voiceinstrumental_model,
+    load_danceability_model,
+)
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
+from analyze import analyze_track  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
@@ -48,7 +55,11 @@ for label in genre_labels:
 
 KEY_ROOTS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
+effnet_model, genre_model = load_discogs400Effnet_models()
+voice_model = load_voiceinstrumental_model()
+dance_model = load_danceability_model()
 clap_model = load_clap_model()
+_models = (effnet_model, genre_model, voice_model, dance_model, clap_model)
 
 
 def _track_payload(i: int, extra: dict | None = None) -> dict:
@@ -83,6 +94,39 @@ def meta():
 @app.get("/api/tracks")
 def tracks():
     return [{"idx": i, "track_id": tid} for i, tid in enumerate(df.track_id.tolist())]
+
+
+@app.post("/api/analyze")
+async def analyze_upload(request: Request):
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        tmp.write(await request.body())
+        tmp_path = Path(tmp.name)
+    try:
+        d = analyze_track(tmp_path, _models)
+    except Exception as e:
+        raise HTTPException(500, str(e))
+    finally:
+        tmp_path.unlink(missing_ok=True)
+    voice_prob = float(d["voice_instrumental"][0])
+    dance_prob = float(d["danceability"][1])
+    genre_acts = d["genre_discogs400"]
+    top_idx = int(np.argmax(genre_acts))
+    top_label = genre_labels[top_idx]
+    top_parent, top_style = top_label.split("---", 1)
+    return {
+        "bpm": round(float(d["bpm"]), 1),
+        "key_root": d["key_edma"]["key"],
+        "key_scale": d["key_edma"]["scale"],
+        "key_conf": round(float(d["key_edma"]["confidence"]), 3),
+        "voice_prob": round(voice_prob, 3),
+        "dance_prob": round(dance_prob, 3),
+        "loudness_lufs": round(float(d["loudness_integrated_lufs"]), 1),
+        "top_genre": top_label,
+        "top_parent": top_parent,
+        "top_style": top_style,
+        "top_activation": round(float(genre_acts[top_idx]), 3),
+    }
 
 
 class FilterBody(BaseModel):

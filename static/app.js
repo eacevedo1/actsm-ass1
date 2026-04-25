@@ -97,6 +97,55 @@ async function init() {
   }
 }
 
+// ---------- analyze upload ----------
+document.getElementById('f-upload').addEventListener('change', async () => {
+  const file = document.getElementById('f-upload').files[0];
+  if (!file) return;
+  const zone   = document.getElementById('f-upload-zone');
+  const status = document.getElementById('f-analyze-status');
+  zone.className = 'upload-zone analyzing';
+  status.innerHTML = '<span>Analyzing…</span>';
+  try {
+    const r = await fetch('/api/analyze', { method: 'POST', body: file });
+    const d = await r.json();
+if (!r.ok) throw new Error(d.detail ?? `HTTP ${r.status}`);
+
+    // BPM ±10%
+    document.getElementById('f-bpmmin').value = Math.round(d.bpm * 0.9);
+    document.getElementById('f-bpmmax').value = Math.round(d.bpm * 1.1);
+    // Key
+    document.getElementById('f-root').value  = d.key_root;
+    document.getElementById('f-scale').value = d.key_scale;
+    document.getElementById('f-kconf').value = ((d.key_conf ?? 0) * 0.8).toFixed(2);
+    // Voice
+    const voice = d.voice_prob > 0.6 ? 'vocal' : d.voice_prob < 0.4 ? 'instrumental' : 'any';
+    document.getElementById('f-voice').value = voice;
+    // Danceability ±0.2
+    document.getElementById('f-dmin').value = Math.max(0, (d.dance_prob ?? 0) - 0.2).toFixed(2);
+    document.getElementById('f-dmax').value = Math.min(1, (d.dance_prob ?? 1) + 0.2).toFixed(2);
+    // Genre — set parent first (triggers style dropdown population), then set style
+    if (d.top_parent) {
+      const pSel = document.getElementById('f-parent');
+      pSel.value = d.top_parent;
+      pSel.dispatchEvent(new Event('change'));
+      document.getElementById('f-style').value = d.top_genre;
+    }
+
+    zone.className = 'upload-zone done';
+    status.innerHTML = [
+      `<span class="upload-chip">♩ ${(d.bpm ?? 0).toFixed(0)} BPM</span>`,
+      `<span class="upload-chip">${d.key_root ?? '?'} ${d.key_scale ?? '?'}</span>`,
+      `<span class="upload-chip">${voice}</span>`,
+      `<span class="upload-chip">dance ${(d.dance_prob ?? 0).toFixed(2)}</span>`,
+      `<span class="upload-chip">${(d.loudness_lufs ?? 0).toFixed(1)} LUFS</span>`,
+      d.top_style ? `<span class="upload-chip">🎸 ${d.top_style}</span>` : '',
+    ].join('');
+  } catch (e) {
+    zone.className = 'upload-zone';
+    status.innerHTML = `<span style="color:crimson">Error: ${e.message}</span>`;
+  }
+});
+
 // ---------- descriptors ----------
 document.getElementById('f-run').addEventListener('click', async () => {
   const body = {
