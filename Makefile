@@ -16,7 +16,10 @@ ESSENTIA_MODELS := \
 CLAP_URL := https://huggingface.co/lukewys/laion_clap/resolve/main/music_speech_epoch_15_esc_89.25.pt
 CLAP_FILE := music_speech_epoch_15_esc_89.25.pt
 
-.PHONY: build up down shell models analyze app indexes
+DATA_DIR := data
+DRIVE_FOLDER_ID := 1c5yJMw7znSoohe7ad1SoTKTvJlXS4Rux
+
+.PHONY: build up down shell models analyze app indexes data
 
 build:
 	docker compose build
@@ -55,3 +58,8 @@ models:
 
 indexes:
 	docker compose exec actsm python /code/scripts/build_indexes.py
+
+data:
+	mkdir -p $(DATA_DIR)
+	@command -v gdown >/dev/null 2>&1 || pip install gdown
+	gdown --folder $(DRIVE_FOLDER_ID) -O $(DATA_DIR)/ --remaining-ok
