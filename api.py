@@ -1,4 +1,6 @@
+import gzip
 import os
+import pickle
 import sys
 from pathlib import Path
 from typing import Literal
@@ -18,12 +20,12 @@ from src.models import load_clap_model  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
-INDEXES_DIR = ROOT / "output" / "cache" / "indexes"
+INDEXES_DIR = ROOT / "cache" / "indexes"
 HOST_ROOT = os.environ.get("HOST_ROOT", "")
 
 app = FastAPI(title="MusAV — Unified Playlist API")
 
-df, effnet_matrix, clap_matrix, genre_matrix, genre_labels = load_collection()
+df, genre_matrix, genre_labels = load_collection()
 df = df.reset_index(drop=True)
 
 # Try to load FAISS indexes; fall back to numpy if not available
@@ -146,19 +148,24 @@ def similar(idx: int, k: int = 10):
         raise HTTPException(404, "idx out of range")
     k = min(max(1, k), 50)
 
+    feat_p = Path(df.iloc[idx].feat_path)
+    try:
+        with gzip.open(feat_p, "rb") as f:
+            d = pickle.load(f)
+    except Exception:
+        raise HTTPException(500, "feature file missing")
+
     def topk_faiss(index, query_vec, exclude_idx, k_val):
-        q = query_vec.reshape(1, -1).astype(np.float32)
+        q = np.array(query_vec, dtype=np.float32).reshape(1, -1)
         faiss.normalize_L2(q)
-        distances, indices = index.search(q, k_val + 1)  # +1 to exclude self
+        distances, indices = index.search(q, k_val + 1)
         indices = indices[0]
         distances = distances[0]
         mask = indices != exclude_idx
         return indices[mask][:k_val], distances[mask][:k_val]
 
-    q_e = effnet_matrix[idx]
-    q_c = clap_matrix[idx]
-    idx_e, score_e = topk_faiss(faiss_effnet, q_e, idx, k)
-    idx_c, score_c = topk_faiss(faiss_clap, q_c, idx, k)
+    idx_e, score_e = topk_faiss(faiss_effnet, d["discogs_effnet_embedding"], idx, k)
+    idx_c, score_c = topk_faiss(faiss_clap, d["clap_embedding"], idx, k)
 
     return {
         "query": _track_payload(idx),

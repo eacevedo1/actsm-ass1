@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 FEATURES_DIR = Path("features")
 AUDIO_DIR = Path("data")
-CACHE_DIR = Path("output/cache")
+CACHE_DIR = Path("cache")
 
 _GENRE_META_URL = (
     "https://essentia.upf.edu/models/classification-heads/"
@@ -39,22 +39,18 @@ def _build_cache():
     files = sorted(FEATURES_DIR.rglob("*.pkl.gz"))
 
     rows = []
-    effnet = np.empty((len(files), 1280), dtype=np.float32)
-    clap = np.empty((len(files), 512), dtype=np.float32)
-    genre = np.empty((len(files), 400), dtype=np.float32)
-
-    keep = 0
+    genre_list = []
     for fpath in tqdm(files, desc="Building UI cache"):
         try:
             with gzip.open(fpath, "rb") as f:
                 d = pickle.load(f)
         except Exception:
             continue
-        track_id = fpath.stem.replace(".pkl", "")
         audio_path = _audio_path_for(fpath)
         rows.append({
-            "track_id": track_id,
+            "track_id": fpath.stem.replace(".pkl", ""),
             "audio_path": str(audio_path),
+            "feat_path": str(fpath),
             "bpm": float(d["bpm"]),
             "bpm_confidence": float(d["bpm_confidence"]),
             "key_temperley": f"{d['key_temperley']['key']} {d['key_temperley']['scale']}",
@@ -68,34 +64,23 @@ def _build_cache():
             "instrumental_prob": float(d["voice_instrumental"][1]),
             "danceability_prob": float(d["danceability"][1]),
         })
-        effnet[keep] = d["discogs_effnet_embedding"]
-        clap[keep] = d["clap_embedding"]
-        genre[keep] = d["genre_discogs400"]
-        keep += 1
-
-    effnet = effnet[:keep]
-    clap = clap[:keep]
-    genre = genre[:keep]
+        genre_list.append(d["genre_discogs400"])
 
     df = pd.DataFrame(rows)
     df.to_parquet(CACHE_DIR / "collection.parquet")
-    np.save(CACHE_DIR / "effnet.npy", effnet)
-    np.save(CACHE_DIR / "clap.npy", clap)
-    np.save(CACHE_DIR / "genre.npy", genre)
-    return df, effnet, clap, genre
+    np.save(CACHE_DIR / "genre.npy", np.array(genre_list, dtype=np.float32))
+    return df
 
 
 def load_collection(rebuild: bool = False):
     parquet = CACHE_DIR / "collection.parquet"
     if rebuild or not parquet.exists():
-        df, effnet, clap, genre = _build_cache()
+        df = _build_cache()
     else:
         df = pd.read_parquet(parquet)
-        effnet = np.load(CACHE_DIR / "effnet.npy")
-        clap = np.load(CACHE_DIR / "clap.npy")
-        genre = np.load(CACHE_DIR / "genre.npy")
+    genre = np.load(CACHE_DIR / "genre.npy")
     labels = _load_genre_labels()
-    return df, effnet, clap, genre, labels
+    return df, genre, labels
 
 
 def l2_normalize(x: np.ndarray) -> np.ndarray:
