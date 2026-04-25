@@ -47,23 +47,25 @@ def _build_cache():
         except Exception:
             continue
         audio_path = _audio_path_for(fpath)
-        rows.append({
-            "track_id": fpath.stem.replace(".pkl", ""),
-            "audio_path": str(audio_path),
-            "feat_path": str(fpath),
-            "bpm": float(d["bpm"]),
-            "bpm_confidence": float(d["bpm_confidence"]),
-            "key_temperley": f"{d['key_temperley']['key']} {d['key_temperley']['scale']}",
-            "key_krumhansl": f"{d['key_krumhansl']['key']} {d['key_krumhansl']['scale']}",
-            "key_edma": f"{d['key_edma']['key']} {d['key_edma']['scale']}",
-            "key_edma_root": d["key_edma"]["key"],
-            "key_edma_scale": d["key_edma"]["scale"],
-            "key_conf_edma": float(d["key_edma"]["confidence"]),
-            "loudness_lufs": float(d["loudness_integrated_lufs"]),
-            "voice_prob": float(d["voice_instrumental"][0]),
-            "instrumental_prob": float(d["voice_instrumental"][1]),
-            "danceability_prob": float(d["danceability"][1]),
-        })
+        rows.append(
+            {
+                "track_id": fpath.stem.replace(".pkl", ""),
+                "audio_path": str(audio_path),
+                "feat_path": str(fpath),
+                "bpm": float(d["bpm"]),
+                "bpm_confidence": float(d["bpm_confidence"]),
+                "key_temperley": f"{d['key_temperley']['key']} {d['key_temperley']['scale']}",
+                "key_krumhansl": f"{d['key_krumhansl']['key']} {d['key_krumhansl']['scale']}",
+                "key_edma": f"{d['key_edma']['key']} {d['key_edma']['scale']}",
+                "key_edma_root": d["key_edma"]["key"],
+                "key_edma_scale": d["key_edma"]["scale"],
+                "key_conf_edma": float(d["key_edma"]["confidence"]),
+                "loudness_lufs": float(d["loudness_integrated_lufs"]),
+                "voice_prob": float(d["voice_instrumental"][0]),
+                "instrumental_prob": float(d["voice_instrumental"][1]),
+                "danceability_prob": float(d["danceability"][1]),
+            }
+        )
         genre_list.append(d["genre_discogs400"])
 
     df = pd.DataFrame(rows)
@@ -89,7 +91,9 @@ def l2_normalize(x: np.ndarray) -> np.ndarray:
     return x / n
 
 
-def cosine_top_k(query: np.ndarray, matrix: np.ndarray, k: int, exclude: int | None = None):
+def cosine_top_k(
+    query: np.ndarray, matrix: np.ndarray, k: int, exclude: int | None = None
+):
     q = query / (np.linalg.norm(query) + 1e-12)
     m = l2_normalize(matrix)
     scores = m @ q
@@ -100,7 +104,12 @@ def cosine_top_k(query: np.ndarray, matrix: np.ndarray, k: int, exclude: int | N
     return idx, scores[idx]
 
 
-def build_m3u8_content(paths: list[str], titles: list[str] | None = None, docker_root: str = "/code", host_root: str = "") -> str:
+def build_m3u8_content(
+    paths: list[str],
+    titles: list[str] | None = None,
+    docker_root: str = "/code",
+    host_root: str = "",
+) -> str:
     lines = ["#EXTM3U"]
     for i, p in enumerate(paths):
         title = titles[i] if titles else Path(p).stem

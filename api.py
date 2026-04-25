@@ -108,8 +108,9 @@ def filter_tracks(body: FilterBody):
     bpm_lo = body.bpm_min if body.bpm_min is not None else -np.inf
     bpm_hi = body.bpm_max if body.bpm_max is not None else np.inf
     mask &= (df.bpm.values >= bpm_lo) & (df.bpm.values <= bpm_hi)
-    mask &= (df.danceability_prob.values >= body.dance_min) & \
-            (df.danceability_prob.values <= body.dance_max)
+    mask &= (df.danceability_prob.values >= body.dance_min) & (
+        df.danceability_prob.values <= body.dance_max
+    )
     if body.voice == "vocal":
         mask &= df.voice_prob.values >= 0.5
     elif body.voice == "instrumental":
@@ -169,8 +170,12 @@ def similar(idx: int, k: int = 10):
 
     return {
         "query": _track_payload(idx),
-        "effnet": [_track_payload(int(i), {"score": float(s)}) for i, s in zip(idx_e, score_e)],
-        "clap": [_track_payload(int(i), {"score": float(s)}) for i, s in zip(idx_c, score_c)],
+        "effnet": [
+            _track_payload(int(i), {"score": float(s)}) for i, s in zip(idx_e, score_e)
+        ],
+        "clap": [
+            _track_payload(int(i), {"score": float(s)}) for i, s in zip(idx_c, score_c)
+        ],
     }
 
 
