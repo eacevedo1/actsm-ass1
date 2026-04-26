@@ -85,25 +85,6 @@ def load_collection(rebuild: bool = False):
     return df, genre, labels
 
 
-def l2_normalize(x: np.ndarray) -> np.ndarray:
-    n = np.linalg.norm(x, axis=-1, keepdims=True)
-    n = np.where(n == 0, 1, n)
-    return x / n
-
-
-def cosine_top_k(
-    query: np.ndarray, matrix: np.ndarray, k: int, exclude: int | None = None
-):
-    q = query / (np.linalg.norm(query) + 1e-12)
-    m = l2_normalize(matrix)
-    scores = m @ q
-    if exclude is not None:
-        scores[exclude] = -np.inf
-    idx = np.argpartition(-scores, k)[:k]
-    idx = idx[np.argsort(-scores[idx])]
-    return idx, scores[idx]
-
-
 def build_m3u8_content(
     paths: list[str],
     titles: list[str] | None = None,
