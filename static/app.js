@@ -183,6 +183,38 @@ document.getElementById('f-run').addEventListener('click', async () => {
 document.getElementById('f-m3u8').addEventListener('click',
   () => exportM3U8('descriptors', lastDescriptorIdxs));
 
+// ---------- similarity upload ----------
+document.getElementById('s-upload').addEventListener('change', async () => {
+  const file = document.getElementById('s-upload').files[0];
+  if (!file) return;
+  const zone   = document.getElementById('s-upload-zone');
+  const status = document.getElementById('s-upload-status');
+  const k = +document.getElementById('s-k').value;
+  zone.className = 'upload-zone analyzing';
+  status.innerHTML = '<span>Analyzing…</span>';
+  try {
+    const r = await fetch(`/api/similar_upload?k=${k}`, { method: 'POST', body: file });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail ?? `HTTP ${r.status}`);
+
+    document.getElementById('s-query-box').classList.remove('hidden');
+    document.getElementById('s-query-audio').src = URL.createObjectURL(file);
+
+    document.getElementById('s-effnet').innerHTML = data.effnet.map((r, i) => resultCard(r, i)).join('');
+    document.getElementById('s-clap').innerHTML   = data.clap.map((r, i) => resultCard(r, i)).join('');
+    lastSimilar = {
+      effnet: data.effnet.map(x => x.idx),
+      clap:   data.clap.map(x => x.idx),
+      query_id: file.name.replace(/\.[^.]+$/, ''),
+    };
+    zone.className = 'upload-zone done';
+    status.innerHTML = `<span class="upload-chip">♪ ${data.effnet.length} similar tracks found</span>`;
+  } catch (e) {
+    zone.className = 'upload-zone';
+    status.innerHTML = `<span style="color:crimson">Error: ${e.message}</span>`;
+  }
+});
+
 // ---------- similarity ----------
 document.getElementById('s-run').addEventListener('click', async () => {
   const idx = +document.getElementById('s-track').value;

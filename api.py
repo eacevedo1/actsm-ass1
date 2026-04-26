@@ -2,6 +2,7 @@ import gzip
 import os
 import pickle
 import sys
+import tempfile
 from pathlib import Path
 from typing import Literal
 
@@ -98,7 +99,6 @@ def tracks():
 
 @app.post("/api/analyze")
 async def analyze_upload(request: Request):
-    import tempfile
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
         tmp.write(await request.body())
         tmp_path = Path(tmp.name)
@@ -185,6 +185,34 @@ def filter_tracks(body: FilterBody):
     order = positions[np.argsort(-score[positions])][: body.top_k]
     results = [_track_payload(int(i), {"score": float(score[int(i)])}) for i in order]
     return {"results": results, "total": int(mask.sum())}
+
+
+@app.post("/api/similar_upload")
+async def similar_upload(request: Request, k: int = 10):
+    k = min(max(1, k), 50)
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
+        tmp.write(await request.body())
+        tmp_path = Path(tmp.name)
+    try:
+        d = analyze_track(tmp_path, _models)
+    except Exception as e:
+        raise HTTPException(500, str(e))
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+    def topk_faiss_upload(index, query_vec, k_val):
+        q = np.array(query_vec, dtype=np.float32).reshape(1, -1)
+        faiss.normalize_L2(q)
+        distances, indices = index.search(q, k_val)
+        return indices[0], distances[0]
+
+    idx_e, score_e = topk_faiss_upload(faiss_effnet, d["discogs_effnet_embedding"], k)
+    idx_c, score_c = topk_faiss_upload(faiss_clap, d["clap_embedding"], k)
+
+    return {
+        "effnet": [_track_payload(int(i), {"score": float(s)}) for i, s in zip(idx_e, score_e)],
+        "clap": [_track_payload(int(i), {"score": float(s)}) for i, s in zip(idx_c, score_c)],
+    }
 
 
 @app.get("/api/similar/{idx}")
