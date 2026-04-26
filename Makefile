@@ -64,4 +64,4 @@ indexes:
 data:
 	mkdir -p $(DATA_DIR)
 	@command -v gdown >/dev/null 2>&1 || pip install gdown
-	gdown --folder $(DRIVE_FOLDER_ID) -O $(DATA_DIR)/ --remaining-ok
+	gdown --folder $(DRIVE_FOLDER_ID) -O $(DATA_DIR)/
