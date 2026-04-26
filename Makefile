@@ -38,7 +38,7 @@ shell:
 analyze:
 	docker compose exec actsm python /code/scripts/analyze.py --audio-dir /code/data --output-dir /code/features --workers 1
 
-app: indexes
+app: models indexes
 	docker compose exec actsm uvicorn api:app --host 0.0.0.0 --port 8000 --app-dir /code
 
 models:
